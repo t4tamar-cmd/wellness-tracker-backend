@@ -129,6 +129,29 @@ def list_scans(db: Session = Depends(get_db)):
     return db.query(ScanLog).order_by(ScanLog.started_at.desc()).limit(20).all()
 
 
+@app.get("/api/debug")
+def debug():
+    import httpx
+    tavily_key = os.environ.get("TAVILY_API_KEY", "")
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    result = {
+        "tavily_key_set": bool(tavily_key),
+        "anthropic_key_set": bool(anthropic_key),
+        "tavily_test": None,
+    }
+    if tavily_key:
+        try:
+            r = httpx.post("https://api.tavily.com/search", json={
+                "api_key": tavily_key,
+                "query": "wellness app California",
+                "max_results": 1,
+            }, timeout=10)
+            result["tavily_test"] = {"status": r.status_code, "body": r.text[:300]}
+        except Exception as e:
+            result["tavily_test"] = {"error": str(e)}
+    return result
+
+
 @app.get("/api/report/weekly")
 def download_weekly_report():
     pdf_bytes = generate_weekly_report_pdf()
