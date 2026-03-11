@@ -11,7 +11,7 @@ from report import generate_and_email_report
 
 
 def run_scan():
-    tavily_key = os.getenv("TAVILY_API_KEY", "")
+    tavily_key = os.getenv("BRAVE_API_KEY", "")
     anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
 
     if not tavily_key or not anthropic_key:

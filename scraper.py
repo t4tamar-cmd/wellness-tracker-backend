@@ -2,7 +2,7 @@ import os
 import httpx
 from typing import List, Dict
 
-TAVILY_API_URL = "https://api.tavily.com/search"
+BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
 
 SEARCH_QUERIES = [
     "vitamin personalization app California startup",
@@ -16,29 +16,25 @@ SEARCH_QUERIES = [
 ]
 
 
-def search_tavily(query: str, api_key: str, max_results: int = 8) -> List[Dict]:
-    payload = {
-        "api_key": api_key,
-        "query": query,
-        "search_depth": "advanced",
-        "include_answer": False,
-        "include_raw_content": False,
-        "max_results": max_results,
-        "include_domains": [],
-        "exclude_domains": [],
+def search_brave(query: str, api_key: str, max_results: int = 8) -> List[Dict]:
+    headers = {
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip",
+        "X-Subscription-Token": api_key,
     }
+    params = {"q": query, "count": max_results}
 
     with httpx.Client(timeout=30) as client:
-        response = client.post(TAVILY_API_URL, json=payload)
+        response = client.get(BRAVE_SEARCH_URL, headers=headers, params=params)
         response.raise_for_status()
         data = response.json()
 
     results = []
-    for item in data.get("results", []):
+    for item in data.get("web", {}).get("results", []):
         results.append({
             "title": item.get("title", ""),
             "url": item.get("url", ""),
-            "content": item.get("content", ""),
+            "content": item.get("description", ""),
         })
     return results
 
@@ -49,7 +45,7 @@ def run_all_searches(api_key: str) -> List[Dict]:
 
     for query in SEARCH_QUERIES:
         try:
-            results = search_tavily(query, api_key)
+            results = search_brave(query, api_key)
             for r in results:
                 url = r["url"]
                 if url not in seen_urls:

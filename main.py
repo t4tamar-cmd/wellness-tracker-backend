@@ -132,23 +132,22 @@ def list_scans(db: Session = Depends(get_db)):
 @app.get("/api/debug")
 def debug():
     import httpx
-    tavily_key = os.environ.get("TAVILY_API_KEY", "")
+    brave_key = os.environ.get("BRAVE_API_KEY", "")
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
     result = {
-        "tavily_key_set": bool(tavily_key),
+        "brave_key_set": bool(brave_key),
         "anthropic_key_set": bool(anthropic_key),
-        "tavily_test": None,
+        "brave_test": None,
     }
-    if tavily_key:
+    if brave_key:
         try:
-            r = httpx.post("https://api.tavily.com/search", json={
-                "api_key": tavily_key,
-                "query": "wellness app California",
-                "max_results": 1,
-            }, timeout=10)
-            result["tavily_test"] = {"status": r.status_code, "body": r.text[:300]}
+            r = httpx.get("https://api.search.brave.com/res/v1/web/search",
+                headers={"Accept": "application/json", "X-Subscription-Token": brave_key},
+                params={"q": "wellness app California", "count": 1},
+                timeout=10)
+            result["brave_test"] = {"status": r.status_code, "body": r.text[:300]}
         except Exception as e:
-            result["tavily_test"] = {"error": str(e)}
+            result["brave_test"] = {"error": str(e)}
     return result
 
 
